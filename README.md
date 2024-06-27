@@ -25,27 +25,10 @@ follow the below instructions:
 1. Click **Create repository**
 1. Clone your new repository
 
-> [!IMPORTANT]
->
-> Make sure to remove or update the [`CODEOWNERS`](./CODEOWNERS) file! For
-> details on how to use this file, see
-> [About code owners](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners).
-
 ## Initial Setup
 
 After you've cloned the repository to your local machine or codespace, you'll
 need to perform some initial setup steps before you can develop your action.
-
-> [!NOTE]
->
-> You'll need to have a reasonably modern version of
-> [Node.js](https://nodejs.org) handy (20.x or later should work!). If you are
-> using a version manager like [`nodenv`](https://github.com/nodenv/nodenv) or
-> [`nvm`](https://github.com/nvm-sh/nvm), this template has a `.node-version`
-> file at the root of the repository that will be used to automatically switch
-> to the correct version when you `cd` into the repository. Additionally, this
-> `.node-version` file is used by GitHub Actions in any `actions/setup-node`
-> actions.
 
 1. :hammer_and_wrench: Install the dependencies
 

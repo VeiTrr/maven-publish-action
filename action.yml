@@ -1,23 +1,28 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Publish Maven Artifact'
+description:
+  'This action publishes a maven artifact from a local maven repository to a
+  remote repository.'
+author: 'Team AppliedEnergistics'
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
   icon: 'heart'
-  color: 'red'
+  color: 'purple'
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  local-repository-path:
+    description: 'The path to the local Maven repository to publish from'
     required: true
-    default: '1000'
-
-# Define your outputs here.
-outputs:
-  time:
-    description: 'Your output description here'
+  remote-repository-url:
+    description: 'The URL to the remote Maven repository'
+    required: true
+  remote-repository-username:
+    description: 'Username for the remote repository'
+    required: false
+  remote-repository-password:
+    description: 'Password for the remote repository'
+    required: false
 
 runs:
   using: node20

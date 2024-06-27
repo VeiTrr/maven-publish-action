@@ -1,9 +1,10 @@
 import * as core from '@actions/core'
+import * as cache from '@actions/cache'
+import * as exec from '@actions/exec'
 import { globSync } from 'glob'
 import * as path from 'path'
 import * as fs from 'fs'
 import * as os from 'os'
-import * as exec from '@actions/exec'
 
 async function main(): Promise<void> {
   /**
@@ -45,6 +46,19 @@ async function main(): Promise<void> {
       { encoding: 'utf8' }
     )
 
+    // Restore Maven cache (for plugins)
+    const primaryCacheKey = `maven-publish-${process.env['RUNNER_OS']}`
+    const cachedPaths = [path.join(os.homedir(), '.m2', 'repository')]
+    const matchedCacheKey = await cache.restoreCache(
+      cachedPaths,
+      primaryCacheKey
+    )
+    if (matchedCacheKey) {
+      core.info(`Cache restored from key: ${matchedCacheKey}`)
+    } else {
+      core.info(`Maven cache was not found`)
+    }
+
     for (const pomFile of pomFiles) {
       // We need to know the basename to find all the other file-types to deploy
       const pomPath = path.parse(pomFile)
@@ -59,8 +73,8 @@ async function main(): Promise<void> {
 
       // Build the maven commandline
       const cmd = [
-        '--batch',
-        '-s',
+        '--batch-mode',
+        '--setting',
         mavenSettings,
         'org.apache.maven.plugins:maven-deploy-plugin:deploy-file',
         // Maven default is only MD5+SHA-1 while Gradle publishes all
@@ -123,6 +137,9 @@ async function main(): Promise<void> {
         }
       })
     }
+
+    await cache.saveCache(cachedPaths, primaryCacheKey)
+    core.info(`Cache saved with the key: ${primaryCacheKey}`)
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)

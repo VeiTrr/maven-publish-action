@@ -26497,6 +26497,17 @@ async function main() {
                 continue;
             }
             const mavenSettings = path.join(tempDir, 'maven-settings.xml');
+            fs.writeFileSync(mavenSettings, `
+      <settings>
+        <servers>
+          <server>
+            <id>remote-repository</id>
+            <username>\${env.REMOTE_REPO_USERNAME}</username>          
+            <password>\${env.REMOTE_REPO_PASSWORD}</password>          
+          </server>        
+        </servers>
+      </settings>
+      `, { encoding: 'utf8' });
             // Build the maven commandline
             let cmd = [
                 '-s',
@@ -26544,7 +26555,11 @@ async function main() {
                 cmd.push('-Dfiles=' + extraFiles.join(','), '-Dtypes=' + extraTypes.join(','), '-Dclassifiers=' + extraClassifiers.join(','));
             }
             await exec.exec('mvn', cmd, {
-                cwd: folder
+                cwd: folder,
+                env: {
+                    REMOTE_REPO_USERNAME: remoteUsername,
+                    REMOTE_REPO_PASSWORD: remotePassword
+                }
             });
         }
     }

@@ -41,6 +41,21 @@ async function main() {
       }
 
       const mavenSettings = path.join(tempDir, 'maven-settings.xml')
+      fs.writeFileSync(
+        mavenSettings,
+        `
+      <settings>
+        <servers>
+          <server>
+            <id>remote-repository</id>
+            <username>\${env.REMOTE_REPO_USERNAME}</username>          
+            <password>\${env.REMOTE_REPO_PASSWORD}</password>          
+          </server>        
+        </servers>
+      </settings>
+      `,
+        { encoding: 'utf8' }
+      )
 
       // Build the maven commandline
       let cmd = [
@@ -100,7 +115,11 @@ async function main() {
       }
 
       await exec.exec('mvn', cmd, {
-        cwd: folder
+        cwd: folder,
+        env: {
+          REMOTE_REPO_USERNAME: remoteUsername,
+          REMOTE_REPO_PASSWORD: remotePassword
+        }
       })
     }
   } catch (error) {

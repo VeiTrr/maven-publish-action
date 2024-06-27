@@ -23,6 +23,10 @@ inputs:
   remote-repository-password:
     description: 'Password for the remote repository'
     required: false
+  temp-dir:
+    description: 'The temp directory to use'
+    required: true
+    default: '${{ runner.temp }}'
 
 runs:
   using: node20

@@ -61597,7 +61597,7 @@ async function main() {
             // Build the maven commandline
             const cmd = [
                 '--batch-mode',
-                '--setting',
+                '--settings',
                 mavenSettings,
                 'org.apache.maven.plugins:maven-deploy-plugin:deploy-file',
                 // Maven default is only MD5+SHA-1 while Gradle publishes all

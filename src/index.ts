@@ -28,6 +28,23 @@ async function main() {
 
     core.debug(`Found pom files: ${pomFiles}`)
 
+    const mavenSettings = path.join(tempDir, 'maven-settings.xml')
+    fs.writeFileSync(
+      mavenSettings,
+      `
+      <settings>
+        <servers>
+          <server>
+            <id>remote-repository</id>
+            <username>\${env.REMOTE_REPO_USERNAME}</username>          
+            <password>\${env.REMOTE_REPO_PASSWORD}</password>          
+          </server>        
+        </servers>
+      </settings>
+      `,
+      { encoding: 'utf8' }
+    )
+
     for (let pomFile of pomFiles) {
       // We need to know the basename to find all the other file-types to deploy
       const pomPath = path.parse(pomFile)
@@ -40,25 +57,9 @@ async function main() {
         continue
       }
 
-      const mavenSettings = path.join(tempDir, 'maven-settings.xml')
-      fs.writeFileSync(
-        mavenSettings,
-        `
-      <settings>
-        <servers>
-          <server>
-            <id>remote-repository</id>
-            <username>\${env.REMOTE_REPO_USERNAME}</username>          
-            <password>\${env.REMOTE_REPO_PASSWORD}</password>          
-          </server>        
-        </servers>
-      </settings>
-      `,
-        { encoding: 'utf8' }
-      )
-
       // Build the maven commandline
       let cmd = [
+        "--batch",
         '-s',
         mavenSettings,
         'org.apache.maven.plugins:maven-deploy-plugin:deploy-file',

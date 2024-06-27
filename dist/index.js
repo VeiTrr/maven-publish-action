@@ -26486,18 +26486,8 @@ async function main() {
             absolute: true
         });
         core.debug(`Found pom files: ${pomFiles}`);
-        for (let pomFile of pomFiles) {
-            // We need to know the basename to find all the other file-types to deploy
-            const pomPath = path.parse(pomFile);
-            const folder = pomPath.dir;
-            const basename = pomPath.name;
-            const mainArtifact = path.join(folder, basename + '.jar');
-            if (!fs.existsSync(mainArtifact)) {
-                core.warning('Main artifact not found: ' + mainArtifact);
-                continue;
-            }
-            const mavenSettings = path.join(tempDir, 'maven-settings.xml');
-            fs.writeFileSync(mavenSettings, `
+        const mavenSettings = path.join(tempDir, 'maven-settings.xml');
+        fs.writeFileSync(mavenSettings, `
       <settings>
         <servers>
           <server>
@@ -26508,6 +26498,16 @@ async function main() {
         </servers>
       </settings>
       `, { encoding: 'utf8' });
+        for (let pomFile of pomFiles) {
+            // We need to know the basename to find all the other file-types to deploy
+            const pomPath = path.parse(pomFile);
+            const folder = pomPath.dir;
+            const basename = pomPath.name;
+            const mainArtifact = path.join(folder, basename + '.jar');
+            if (!fs.existsSync(mainArtifact)) {
+                core.warning('Main artifact not found: ' + mainArtifact);
+                continue;
+            }
             // Build the maven commandline
             let cmd = [
                 '-s',

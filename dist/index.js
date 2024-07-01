@@ -61597,6 +61597,10 @@ async function main() {
             // Build the maven commandline
             const cmd = [
                 '--batch-mode',
+                '--color',
+                'always',
+                '-Dorg.slf4j.simpleLogger.showDateTime=true',
+                '-Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss,SSS',
                 '--settings',
                 mavenSettings,
                 'org.apache.maven.plugins:maven-deploy-plugin:deploy-file',

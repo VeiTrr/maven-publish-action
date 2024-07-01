@@ -74,7 +74,8 @@ async function main(): Promise<void> {
       // Build the maven commandline
       const cmd = [
         '--batch-mode',
-        '--color', 'always',
+        '--color',
+        'always',
         '-Dorg.slf4j.simpleLogger.showDateTime=true',
         '-Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss,SSS',
         '--settings',

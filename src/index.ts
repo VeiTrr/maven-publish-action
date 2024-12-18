@@ -5,6 +5,44 @@ import { globSync } from 'glob'
 import * as path from 'path'
 import * as fs from 'fs'
 import * as os from 'os'
+import axios from 'axios'
+
+async function artifactExists(
+  groupId: string,
+  artifactId: string,
+  version: string,
+  repositoryUrl: string,
+  username: string,
+  password: string
+): Promise<boolean> {
+  const artifactPath = `${groupId.replace(/\./g, '/')}/${artifactId}/${version}/${artifactId}-${version}.jar`
+  const checkUrl = `${repositoryUrl}/${artifactPath}`
+
+  core.info(`Checking existence of artifact: ${checkUrl}`)
+
+  try {
+    const response = await axios.get(checkUrl, {
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`
+      }
+    })
+
+    if (response.status === 200) {
+      core.info(`Artifact exists: ${checkUrl}`)
+      return true
+    }
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      core.info(`Artifact does not exist: ${checkUrl}`)
+      return false
+    }
+    core.warning(
+      `Failed to check artifact existence: ${(error as Error).message}`
+    )
+  }
+
+  return false
+}
 
 async function main(): Promise<void> {
   /**
@@ -37,9 +75,9 @@ async function main(): Promise<void> {
         <servers>
           <server>
             <id>remote-repository</id>
-            <username>\${env.REMOTE_REPO_USERNAME}</username>          
-            <password>\${env.REMOTE_REPO_PASSWORD}</password>          
-          </server>        
+            <username>\${env.REMOTE_REPO_USERNAME}</username>
+            <password>\${env.REMOTE_REPO_PASSWORD}</password>
+          </server>
         </servers>
       </settings>
       `,
@@ -133,13 +171,54 @@ async function main(): Promise<void> {
         )
       }
 
-      await exec.exec('mvn', cmd, {
-        cwd: folder,
-        env: {
-          REMOTE_REPO_USERNAME: remoteUsername,
-          REMOTE_REPO_PASSWORD: remotePassword
+      let stdout = ''
+      let stderr = ''
+      try {
+        await exec.exec('mvn', cmd, {
+          cwd: folder,
+          env: {
+            REMOTE_REPO_USERNAME: remoteUsername,
+            REMOTE_REPO_PASSWORD: remotePassword
+          },
+          listeners: {
+            stdout: (data: Buffer) => {
+              stdout += data.toString()
+            },
+            stderr: (data: Buffer) => {
+              stderr += data.toString()
+            }
+          }
+        })
+      } catch (error) {
+        if (
+          stderr.includes('status: 400 Bad Request') ||
+          stdout.includes('status: 400 Bad Request')
+        ) {
+          const pomContent = fs.readFileSync(pomFile, 'utf8')
+          const groupIdMatch = pomContent.match(/<groupId>(.*?)<\/groupId>/)
+          const artifactIdMatch = pomContent.match(
+            /<artifactId>(.*?)<\/artifactId>/
+          )
+          const versionMatch = pomContent.match(/<version>(.*?)<\/version>/)
+
+          if (groupIdMatch && artifactIdMatch && versionMatch) {
+            if (
+              await artifactExists(
+                groupIdMatch[1],
+                artifactIdMatch[1],
+                versionMatch[1],
+                remoteUrl,
+                remoteUsername,
+                remotePassword
+              )
+            ) {
+              core.warning('Artifact already exists in the repository')
+            }
+          }
+        } else {
+          throw error
         }
-      })
+      }
     }
 
     await cache.saveCache(cachedPaths, primaryCacheKey)

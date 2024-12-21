@@ -192,7 +192,9 @@ async function main(): Promise<void> {
       } catch (error) {
         if (
           stderr.includes('status: 400 Bad Request') ||
-          stdout.includes('status: 400 Bad Request')
+          stdout.includes('status: 400 Bad Request') ||
+          stderr.includes('status: 409 Conflict') ||
+          stdout.includes('status: 409 Conflict')
         ) {
           const pomContent = fs.readFileSync(pomFile, 'utf8')
           const groupIdMatch = pomContent.match(/<groupId>(.*?)<\/groupId>/)
@@ -202,17 +204,28 @@ async function main(): Promise<void> {
           const versionMatch = pomContent.match(/<version>(.*?)<\/version>/)
 
           if (groupIdMatch && artifactIdMatch && versionMatch) {
-            if (
-              await artifactExists(
-                groupIdMatch[1],
-                artifactIdMatch[1],
-                versionMatch[1],
-                remoteUrl,
-                remoteUsername,
-                remotePassword
-              )
-            ) {
-              core.warning('Artifact already exists in the repository')
+            if (fs.statSync(mainArtifact).size === 0) {
+              core.warning('Artifact ' + basename + ' is empty', {
+                title: 'Empty artifact'
+              })
+            } else {
+              if (
+                await artifactExists(
+                  groupIdMatch[1],
+                  artifactIdMatch[1],
+                  versionMatch[1],
+                  remoteUrl,
+                  remoteUsername,
+                  remotePassword
+                )
+              ) {
+                core.warning(
+                  'Artifact ' + basename + ' already exists in the repository',
+                  {
+                    title: 'Artifact already exists'
+                  }
+                )
+              }
             }
           }
         } else {
